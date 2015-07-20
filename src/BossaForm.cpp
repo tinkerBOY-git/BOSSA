@@ -342,7 +342,8 @@ InfoDialog::InfoDialog( wxWindow* parent, wxWindowID id, const wxString& title, 
 	_flashBoxSizer = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Flash") ), wxVERTICAL );
 	
 	wxFlexGridSizer* _flashGridSizer;
-	_flashGridSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	// wxWidgets 3.0 requires GridSizer columns and rows to be exact, otherwise set the column or row to 0
+	_flashGridSizer = new wxFlexGridSizer( 4, 0, 0, 0 );
 	_flashGridSizer->SetFlexibleDirection( wxBOTH );
 	_flashGridSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
@@ -382,7 +383,8 @@ InfoDialog::InfoDialog( wxWindow* parent, wxWindowID id, const wxString& title, 
 	_optionsBoxSizer = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Options") ), wxVERTICAL );
 	
 	wxFlexGridSizer* _gpnvGridSizer;
-	_gpnvGridSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	// wxWidgets 3.0 requires GridSizer columns and rows to be exact, otherwise set the column or row to 0
+	_gpnvGridSizer = new wxFlexGridSizer( 3, 0, 0, 0 );
 	_gpnvGridSizer->SetFlexibleDirection( wxBOTH );
 	_gpnvGridSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	

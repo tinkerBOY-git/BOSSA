@@ -3,7 +3,7 @@
 #
 # Version
 #
-VERSION=1.5-arduino
+VERSION=1.5-arduino-mattairtech-1
 WXVERSION=3.0
 
 #

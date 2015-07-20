@@ -72,7 +72,8 @@ CmdOpts::usage(FILE* out)
         start = _opts[optIdx].help;
         while ((end = strchr(start, '\n')))
         {
-            fwrite(start, end - start + 1, 1, out);
+	    if (!fwrite(start, end - start + 1, 1, out))
+		    return;
             fprintf(out, "%24s", "");
             start = end + 1;
         }

@@ -1,3 +1,37 @@
+
+BOSSA 1.5-arduino-mattairtech-1
+-------------------------------
+
+This version of BOSSA is a fork of BOSSA 1.5-arduino.
+It adds support for more SAMD chips:
+
+  * ATSAMD21E17A
+  * ATSAMD21E16A
+  * ATSAMD21E15A
+  * ATSAMD21G17A
+  * ATSAMD21G16A
+  * ATSAMD21G15A
+  * ATSAMD21J17A
+  * ATSAMD21J16A
+  * ATSAMD21J15A
+  * ATSAMD11D14AM
+  * ATSAMD11D14AS
+  * ATSAMD11C14A
+
+This adds to the previously supported SAMD chips:
+
+  * ATSAMD21J18A
+  * ATSAMD21G18A
+  * ATSAMD21E18A
+  * ATSAMDR1E18A
+
+Only the ATSAMD21E18A and ATSAMD21E17A have been tested with this fork.
+The ATSAMD11D14AM will soon be tested.
+
+All of the D21 chips must use an 8KB bootloader, while the DR1 and D11
+must use a 4KB bootloader. See Devices.h for more information.
+
+
 BOSSA 1.4 for Arduino
 
 This version of BOSSA is a fork of the original project and contains some

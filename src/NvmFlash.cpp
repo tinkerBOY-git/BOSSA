@@ -101,7 +101,7 @@ NvmFlash::~NvmFlash()
 void
 NvmFlash::eraseAll()
 {
-    // Leave the first 8KB, where bootloader resides, erase the rest.
+    // Leave the first 8KB or 4KB, where bootloader resides, erase the rest.
     // Row is a concept used for convinence. When writing you have to write
     // page(s). When erasing you have to erase row(s).
 
@@ -116,7 +116,7 @@ NvmFlash::eraseAll()
     // ...otherwise go with the legacy slow erase...
 
     // Calculate the number of rows that samba occupies (should be 32 for 8KB/0x2000bytes).
-    uint32_t starting_row = ATSAMD_BOOTLOADER_SIZE / _size / ATSAMD_FLASH_ROW_PAGES;
+    uint32_t starting_row = _addr / _size / ATSAMD_FLASH_ROW_PAGES;
     uint32_t total_rows = _pages / ATSAMD_FLASH_ROW_PAGES;
 
     for (uint32_t row=starting_row; row<total_rows; row++)

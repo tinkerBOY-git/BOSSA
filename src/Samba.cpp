@@ -168,10 +168,34 @@ Samba::init()
             printf("Unsupported ARM920T architecture\n");
     }
     // Check for supported M0+ processor
-    // NOTE: 0x1001000a is a ATSAMD21E18A, 0x1001001c is ATSAMR21E18A
-	else if (cid == 0x10010000 || cid == 0x10010100 || cid == 0x10010005 || cid == 0x1001000a || cid == 0x1001001c)
+    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000)
     {
-        return true;
+	    // Check for SAMD (SAMR) architecture
+	    switch (cid)
+	    {
+		    case ATSAMD21J18A_CHIPID:
+		    case ATSAMD21J17A_CHIPID:
+		    case ATSAMD21J16A_CHIPID:
+		    case ATSAMD21J15A_CHIPID:
+		    case ATSAMD21G18A_CHIPID:
+		    case ATSAMD21G17A_CHIPID:
+		    case ATSAMD21G16A_CHIPID:
+		    case ATSAMD21G15A_CHIPID:
+		    case ATSAMD21E18A_CHIPID:
+		    case ATSAMD21E17A_CHIPID:
+		    case ATSAMD21E16A_CHIPID:
+		    case ATSAMD21E15A_CHIPID:
+		    case ATSAMD11D14AM_CHIPID:
+		    case ATSAMD11D14AS_CHIPID:
+		    case ATSAMD11C14A_CHIPID:
+		    case ATSAMR21E18A_CHIPID:
+			return true;
+		    break;
+		    
+		    default:
+			if (_debug)
+				printf("Unsupported SAMD architecture\n");
+	    }
     }
     else
     {
@@ -645,8 +669,20 @@ Samba::reset(void)
     switch (chipId)
     {
     case ATSAMD21J18A_CHIPID:
+    case ATSAMD21J17A_CHIPID:
+    case ATSAMD21J16A_CHIPID:
+    case ATSAMD21J15A_CHIPID:
     case ATSAMD21G18A_CHIPID:
+    case ATSAMD21G17A_CHIPID:
+    case ATSAMD21G16A_CHIPID:
+    case ATSAMD21G15A_CHIPID:
     case ATSAMD21E18A_CHIPID:
+    case ATSAMD21E17A_CHIPID:
+    case ATSAMD21E16A_CHIPID:
+    case ATSAMD21E15A_CHIPID:
+    case ATSAMD11D14AM_CHIPID:
+    case ATSAMD11D14AS_CHIPID:
+    case ATSAMD11C14A_CHIPID:
     case ATSAMR21E18A_CHIPID:
         // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0484c/index.html
         writeWord(0xE000ED0C, 0x05FA0004);
