@@ -25,8 +25,8 @@ This adds to the previously supported SAMD chips:
   * ATSAMD21E18A
   * ATSAMDR1E18A
 
-Only the ATSAMD21E18A and ATSAMD21E17A have been tested with this fork.
-The ATSAMD11D14AM will soon be tested.
+Only the ATSAMD21E18A, ATSAMD21E17A, and ATSAMD11D14AM have been tested
+with this fork.
 
 All of the D21 chips must use an 8KB bootloader, while the DR1 and D11
 must use a 4KB bootloader. See Devices.h for more information.
