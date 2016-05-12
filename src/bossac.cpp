@@ -277,7 +277,8 @@ main(int argc, char* argv[])
         printf("Usage: %s [OPTION...] [FILE]\n", argv[0]);
         printf("Basic Open Source SAM-BA Application (BOSSA) Version " VERSION "\n"
                "Flash programmer for Atmel SAM devices.\n"
-               "Copyright (c) 2011-2012 ShumaTech (http://www.shumatech.com)\n"
+	       "Copyright (c) 2011-2012 ShumaTech (http://www.shumatech.com)\n"
+	       "This build maintained by MattairTech (http://www.mattairtech.com/)\n"
                "\n"
                "Examples:\n"
                "  bossac -e -w -v -b image.bin   # Erase flash, write flash with image.bin,\n"
@@ -285,7 +286,8 @@ main(int argc, char* argv[])
                "  bossac -r0x10000 image.bin     # Read 64KB from flash and store in image.bin\n"
               );
         printf("\nOptions:\n");
-        cmd.usage(stdout);
+	cmd.usage(stdout);
+	printf("\nReport bugs to <support@mattairtech.com>\n");
         printf("\nReport bugs to <bugs@shumatech.com>\n");
         return 1;
     }

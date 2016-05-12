@@ -121,6 +121,9 @@ class AboutDialog : public wxDialog
 		wxStaticText* _copyrightStaticText;
 		wxHyperlinkCtrl* _shumatechHyperlink;
 		wxStaticLine* m_staticline2;
+		wxStaticText* _mattairtechText;
+		wxHyperlinkCtrl* _mattairtechHyperlink;
+		wxStaticLine* m_staticline4;
 		wxStaticText* m_disclaimerStaticText;
 		wxStaticLine* m_staticline3;
 		wxStdDialogButtonSizer* _sdbSizer;
