@@ -1,3 +1,33 @@
+BOSSA 1.6.1-arduino-mattairtech-1
+-------------------------------
+
+This version of BOSSA is a fork of BOSSA 1.6.1-arduino.
+It adds support for more M0+ chips, the SAML and SAMC:
+
+  * ATSAML21E18B
+  * ATSAML21E17B
+  * ATSAML21E16B
+  * ATSAML21E15B
+  * ATSAML21G18B
+  * ATSAML21G17B
+  * ATSAML21G16B
+  * ATSAML21J18B
+  * ATSAML21J17B
+  * ATSAML21J16B
+  
+  * ATSAMC21E18A
+  * ATSAMC21E17A
+  * ATSAMC21E16A
+  * ATSAMC21E15A
+  * ATSAMC21G18A
+  * ATSAMC21G17A
+  * ATSAMC21G16A
+  * ATSAMC21G15A
+  * ATSAMC21J18A
+  * ATSAMC21J17A
+  * ATSAMC21J16A
+  * ATSAMC21J15A
+
 
 BOSSA 1.5-arduino-mattairtech-1
 -------------------------------

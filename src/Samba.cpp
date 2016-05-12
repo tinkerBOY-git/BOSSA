@@ -177,9 +177,9 @@ Samba::init()
             printf("Unsupported ARM920T architecture\n");
     }
     // Check for supported M0+ processor
-    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000)
+    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000 || (cid & 0xFFFF0000) == 0x11010000 || (cid & 0xFFFF0000) == 0x10810000)
     {
-	    // Check for SAMD (SAMR) architecture
+	    // Check for SAM M0+ architecture
 	    switch (cid)
 	    {
 		    case ATSAMD21J18A_CHIPID:
@@ -194,16 +194,42 @@ Samba::init()
 		    case ATSAMD21E17A_CHIPID:
 		    case ATSAMD21E16A_CHIPID:
 		    case ATSAMD21E15A_CHIPID:
+			    
+		    case ATSAML21J18B_CHIPID:
+		    case ATSAML21J17B_CHIPID:
+		    case ATSAML21J16B_CHIPID:
+		    case ATSAML21G18B_CHIPID:
+		    case ATSAML21G17B_CHIPID:
+		    case ATSAML21G16B_CHIPID:
+		    case ATSAML21E18B_CHIPID:
+		    case ATSAML21E17B_CHIPID:
+		    case ATSAML21E16B_CHIPID:
+		    case ATSAML21E15B_CHIPID:
+			    
+		    case ATSAMC21J18A_CHIPID:
+		    case ATSAMC21J17A_CHIPID:
+		    case ATSAMC21J16A_CHIPID:
+		    case ATSAMC21J15A_CHIPID:
+		    case ATSAMC21G18A_CHIPID:
+		    case ATSAMC21G17A_CHIPID:
+		    case ATSAMC21G16A_CHIPID:
+		    case ATSAMC21G15A_CHIPID:
+		    case ATSAMC21E18A_CHIPID:
+		    case ATSAMC21E17A_CHIPID:
+		    case ATSAMC21E16A_CHIPID:
+		    case ATSAMC21E15A_CHIPID:
+			    
 		    case ATSAMD11D14AM_CHIPID:
 		    case ATSAMD11D14AS_CHIPID:
 		    case ATSAMD11C14A_CHIPID:
+			    
 		    case ATSAMR21E18A_CHIPID:
 			return true;
 		    break;
 		    
 		    default:
 			if (_debug)
-				printf("Unsupported SAMD architecture\n");
+				printf("Unsupported SAM M0+ architecture\n");
 	    }
     }
     else
@@ -696,9 +722,35 @@ Samba::reset(void)
     case ATSAMD21E17A_CHIPID:
     case ATSAMD21E16A_CHIPID:
     case ATSAMD21E15A_CHIPID:
+
+    case ATSAML21J18B_CHIPID:
+    case ATSAML21J17B_CHIPID:
+    case ATSAML21J16B_CHIPID:
+    case ATSAML21G18B_CHIPID:
+    case ATSAML21G17B_CHIPID:
+    case ATSAML21G16B_CHIPID:
+    case ATSAML21E18B_CHIPID:
+    case ATSAML21E17B_CHIPID:
+    case ATSAML21E16B_CHIPID:
+    case ATSAML21E15B_CHIPID:
+
+    case ATSAMC21J18A_CHIPID:
+    case ATSAMC21J17A_CHIPID:
+    case ATSAMC21J16A_CHIPID:
+    case ATSAMC21J15A_CHIPID:
+    case ATSAMC21G18A_CHIPID:
+    case ATSAMC21G17A_CHIPID:
+    case ATSAMC21G16A_CHIPID:
+    case ATSAMC21G15A_CHIPID:
+    case ATSAMC21E18A_CHIPID:
+    case ATSAMC21E17A_CHIPID:
+    case ATSAMC21E16A_CHIPID:
+    case ATSAMC21E15A_CHIPID:
+
     case ATSAMD11D14AM_CHIPID:
     case ATSAMD11D14AS_CHIPID:
     case ATSAMD11C14A_CHIPID:
+
     case ATSAMR21E18A_CHIPID:
         // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0484c/index.html
         writeWord(0xE000ED0C, 0x05FA0004);
