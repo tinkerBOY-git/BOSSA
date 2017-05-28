@@ -120,10 +120,10 @@ Flasher::write(const char* filename)
             // ...otherwise go with the legacy slow method
 
             uint8_t buffer[pageSize];
+	    const uint32_t divisor = (numPages / 10) ? (numPages / 10) : 1;
             while ((fbytes = fread(buffer, 1, pageSize, infile)) > 0)
             {
-                // print once every 10%
-                if ((pageNum % (numPages/10)) == 0)
+                if ((pageNum % divisor) == 0)
                     progressBar(pageNum, numPages);
 
                 _flash->loadBuffer(buffer, fbytes);
@@ -221,11 +221,11 @@ Flasher::verify(const char* filename)
             throw FileSizeError();
 
         printf("Verify %ld bytes of flash\n", fsize);
-
+	
+	const uint32_t divisor = (numPages / 10) ? (numPages / 10) : 1;
         while ((fbytes = fread(bufferA, 1, pageSize, infile)) > 0)
         {
-            // print once every 10%
-            if ((pageNum % (numPages/10)) == 0)
+            if ((pageNum % divisor) == 0)
                 progressBar(pageNum, numPages);
 
             _flash->readPage(pageNum, bufferB);

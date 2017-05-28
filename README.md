@@ -1,5 +1,7 @@
-BOSSA 1.6.1-arduino-mattairtech-1
+BOSSA 1.6.1-arduino-mattairtech-2
 -------------------------------
+
+1.6.1-arduino-mattairtech-2 corrects SAML CHIPID information in Devices.h.
 
 This version of BOSSA is a fork of BOSSA 1.6.1-arduino.
 It adds support for more M0+ chips, the SAML and SAMC:
@@ -14,7 +16,6 @@ It adds support for more M0+ chips, the SAML and SAMC:
   * ATSAML21J18B
   * ATSAML21J17B
   * ATSAML21J16B
-  
   * ATSAMC21E18A
   * ATSAMC21E17A
   * ATSAMC21E16A

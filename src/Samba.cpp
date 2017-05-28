@@ -72,7 +72,7 @@ Samba::init()
     uint8_t cmd[3];
     uint32_t cid;
 
-    _port->timeout(TIMEOUT_QUICK);
+    _port->timeout(TIMEOUT_NORMAL);
 
     // Allows Arduino auto-reset
     usleep(500000);

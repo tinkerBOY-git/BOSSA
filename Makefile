@@ -3,7 +3,7 @@
 #
 # Version
 #
-VERSION=1.6.1-arduino-mattairtech-1
+VERSION=1.7.0-mattairtech-1
 WXVERSION=3.0
 
 #
@@ -130,6 +130,14 @@ COMMON_LIBS+=-ltermcap
 # by bossa as a USB interface and doesn't fall back to the serial
 # programming protocol.)
 WXVERSION=2.8
+
+endif
+
+ifeq (${OS},FreeBSD)
+
+# This is only needed for bossash, but we can't add it to BOSSASH_LIBS here
+# because that one is redefined later.
+COMMON_SRCS+=PosixSerialPort.cpp BSDPortFactory.cpp
 
 endif
 
