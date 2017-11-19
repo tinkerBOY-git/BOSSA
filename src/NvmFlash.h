@@ -48,6 +48,11 @@ public:
              uint32_t user,
              uint32_t stack,
              uint32_t regs,
+             uint32_t bodreg,
+             uint32_t bodresetbit,
+             uint32_t bodenablebit,
+             uint32_t pagesPerRow,
+             bool isD51,
              bool canBrownout);
 
     virtual ~NvmFlash();
@@ -81,6 +86,11 @@ public:
 
 private:
     uint32_t _regs;
+    uint32_t _bodreg;
+    uint32_t _bodresetbit;
+    uint32_t _bodenablebit;
+    uint32_t _pagesPerRow;
+    bool _isD51;
     bool _canBrownout;
 
     uint32_t getAddressByRegion(uint32_t region);

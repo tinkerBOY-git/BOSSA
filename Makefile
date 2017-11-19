@@ -3,7 +3,7 @@
 #
 # Version
 #
-VERSION=1.7.0-mattairtech-1
+VERSION=1.7.0-mattairtech-2
 WXVERSION=3.0
 
 #

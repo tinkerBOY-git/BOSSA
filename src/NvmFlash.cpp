@@ -28,36 +28,42 @@
 #include "WordCopyApplet.h"
 #include "NvmFlash.h"
 
-// System control brown out register.
-// SYSCTRL base address + BOD33 reg offset
-
-#define SYSCTRL_BOD33_REG                         (0x40000800ul + 0x34ul)
-#define SYSCTRL_STATUS_REG_ENABLE_BIT             (0x2ul)
-#define SYSCTRL_STATUS_REG_BOD33_MASK             (0xfffffffdul)
-#define SYSCTRL_STATUS_REG_BOD33_RESET_ENABLE_BIT (0x8ul)
-#define SYSCTRL_STATUS_REG_BOD33_RESET_MASK       (0xffffffe7ul)
-
 // The base address of the NVM module in
 // main memory + offset to the CTRLA register
-#define NVM_CTRLA_REG                   (_regs+0x00)
+#define NVM_COMMAND_REG                 (_regs+0x00)
+#define NVM_CONTROL_REG                 (_regs+0x04)
+#define NVM_CONTROL_MANUAL_WRITE_BIT    (0x1 << 7)
 
-#define NVM_CTRLB_REG                   (_regs+0x04)
+#define NVM_D51_COMMAND_REG                 (_regs+0x04)
+#define NVM_D51_CONTROL_REG                 (_regs+0x00)
+#define NVM_D51_CONTROL_MANUAL_WRITE_MASK   (0x0030)
 
 // The NVM register that stores lock status
 #define NVM_LOCK_REG                    (_regs+0x20)
+#define NVM_D51_UNLOCK_REG              (_regs+0x18)
 
-// The interrupt status register
-#define NVM_INT_STATUS_REG              (_regs+0x14)
+// NVM security bit
+#define NVM_SECURITY_BIT_REG            (_regs+0x18)
+#define NVM_D51_SECURITY_BIT_REG        (0x41002000ul+0x2)
+#define NVM_SECURITY_BIT_POS            (8)
+#define NVM_D51_SECURITY_BIT_POS        (0)
 
-// NVM ready bit mask
-#define NVM_INT_STATUS_READY_MASK       0x1
+// NVM status
+#define NVM_STATUS_REG              (_regs+0x14)
+#define NVM_D51_STATUS_REG          (_regs+0x12)
+#define NVM_STATUS_READY_MASK       0x1
 
 // NVM input register to some of the CMDEX commands.
 #define NVM_ADDR_REG                    (_regs+0x1c)
+#define NVM_D51_ADDR_REG                (_regs+0x14)
 
-// NVM STATUS register
-#define NVM_STATUS_REG                  (_regs+0x18)
-#define NVMCTRL_STATUS_MASK             (0xFFEBu)
+// NVM error
+#define NVM_ERROR_REG                  (_regs+0x18)
+#define NVM_D51_ERROR_REG              (_regs+0x10)
+#define NVM_ERROR_MASK                 (0xFFEBu)
+#define NVM_D51_ERROR_MASK             (0xF84Fu)
+#define NVM_D51_ERROR_DONE_MASK        (0x1 << 0)
+#define NVM_D51_ERROR_PROGE_MASK       (0x1 << 2)
 
 // CMDEX field should be 0xA5 to allow execution of any command.
 #define CMDEX_KEY             (0xa500u)
@@ -67,8 +73,16 @@
 #define CMD_UNLOCK_REGION     (CMDEX_KEY | 0x0041u)
 #define CMD_ERASE_ROW         (CMDEX_KEY | 0x0002u)
 #define CMD_WRITE_PAGE        (CMDEX_KEY | 0x0004u)
-#define CMD_SET_SECURITY_BIT  (CMDEX_KEY | 0x0045u)
 #define CMD_CLEAR_PAGE_BUFFER (CMDEX_KEY | 0x0044u)
+#define CMD_SET_SECURITY_BIT  (CMDEX_KEY | 0x0045u)
+
+#define CMD_D51_LOCK_REGION       (CMDEX_KEY | 0x0011u)
+#define CMD_D51_UNLOCK_REGION     (CMDEX_KEY | 0x0012u)
+#define CMD_D51_ERASE_BLOCK       (CMDEX_KEY | 0x0001u)
+#define CMD_D51_WRITE_PAGE        (CMDEX_KEY | 0x0003u)
+#define CMD_D51_CLEAR_PAGE_BUFFER (CMDEX_KEY | 0x0015u)
+#define CMD_D51_SET_SECURITY_BIT  (CMDEX_KEY | 0x0016u)
+#define CMD_D51_RESET_CONTROLLER  (CMDEX_KEY | 0x0010u)
 
 // This is the word size allowed by the communication layer of this bossa client, not the NVM word size which is 2 bytes
 #define SAMBA_API_WORD_SIZE (4ul) // bytes
@@ -84,9 +98,14 @@ NvmFlash::NvmFlash(Samba& samba,
                    uint32_t user,
                    uint32_t stack,
                    uint32_t regs,
+                   uint32_t bodreg,
+                   uint32_t bodresetbit,
+                   uint32_t bodenablebit,
+                   uint32_t pagesPerRow,
+                   bool isD51,
                    bool canBrownout)
     : Flash(samba, name, addr, pages, size, planes, lockRegions, user, stack),
-      _regs(regs), _canBrownout(canBrownout)
+      _regs(regs), _bodreg(bodreg), _bodresetbit(bodresetbit), _bodenablebit(bodenablebit), _pagesPerRow(pagesPerRow), _isD51(isD51), _canBrownout(canBrownout)
 {
     // Upon power up the NVM controller goes through a power up sequence.
     // During this time, access to the NVM controller is halted. Upon power up the
@@ -102,7 +121,7 @@ NvmFlash::eraseAll()
 {
     // Leave the first 8KB or 4KB, where bootloader resides, erase the rest.
     // Row is a concept used for convinence. When writing you have to write
-    // page(s). When erasing you have to erase row(s).
+    // page(s). When erasing you have to erase row(s) (block(s) for the D51).
 
     if (_samba.isChipEraseAvailable())
     {
@@ -114,15 +133,17 @@ NvmFlash::eraseAll()
 
     // ...otherwise go with the legacy slow erase...
 
-    // Calculate the number of rows that samba occupies (should be 32 for 8KB/0x2000bytes).
-    uint32_t starting_row = _addr / _size / ATSAMD_FLASH_ROW_PAGES;
-    uint32_t total_rows = _pages / ATSAMD_FLASH_ROW_PAGES;
+    // Calculate the number of rows (blocks with D51) that samba occupies.
+      uint32_t starting_row = _addr / _size / _pagesPerRow;
+      uint32_t total_rows = _pages / _pagesPerRow;
 
     for (uint32_t row=starting_row; row<total_rows; row++)
     {
-        uint32_t addr_in_flash = (row * ATSAMD_FLASH_ROW_PAGES * pageSize());
-        // The address is byte address, so convert it to word address.
-        addr_in_flash = addr_in_flash / 2;
+        uint32_t addr_in_flash = (row * _pagesPerRow * pageSize());
+        // The address is byte address, so convert it to word address (except with D51).
+        if (_isD51 == false) {
+          addr_in_flash = addr_in_flash / 2;
+        }
 
         // Safe wait. Check and see if this is needed all the time
         while (!nvmIsReady())
@@ -130,19 +151,35 @@ NvmFlash::eraseAll()
         }
 
         // Clear error bits
-        uint16_t status_reg = _samba.readWord(NVM_STATUS_REG) & 0xffff;
-        _samba.writeWord(NVM_STATUS_REG, status_reg | NVMCTRL_STATUS_MASK);
+        if (_isD51 == true) {
+          uint16_t status_reg = _samba.readWord(NVM_D51_ERROR_REG) & 0xffff;
+          _samba.writeWord(NVM_D51_ERROR_REG, status_reg & NVM_D51_ERROR_MASK);
+        } else {
+          uint16_t status_reg = _samba.readWord(NVM_ERROR_REG) & 0xffff;
+          _samba.writeWord(NVM_ERROR_REG, status_reg | NVM_ERROR_MASK);
+        }
 
         // Issue erase command
-        _samba.writeWord(NVM_ADDR_REG, addr_in_flash);
-        executeNvmCommand(CMD_ERASE_ROW);
+        if (_isD51 == true) {
+          _samba.writeWord(NVM_D51_ADDR_REG, addr_in_flash);
+          executeNvmCommand(CMD_D51_ERASE_BLOCK);
+        } else {
+          _samba.writeWord(NVM_ADDR_REG, addr_in_flash);
+          executeNvmCommand(CMD_ERASE_ROW);
+        }
     }
 }
 
 bool
 NvmFlash::nvmIsReady()
 {
-    uint8_t int_flag = _samba.readByte(NVM_INT_STATUS_REG) & NVM_INT_STATUS_READY_MASK;
+    uint8_t int_flag;
+
+    if (_isD51 == true) {
+      int_flag = _samba.readByte(NVM_D51_STATUS_REG) & NVM_STATUS_READY_MASK;
+    } else {
+      int_flag = _samba.readByte(NVM_STATUS_REG) & NVM_STATUS_READY_MASK;
+    }
 
     return int_flag == 1;
 }
@@ -163,12 +200,18 @@ NvmFlash::isLocked()
 bool
 NvmFlash::getLockRegion(uint32_t region)
 {
+    uint32_t value;
+
     if (region >= _lockRegions)
     {
         throw FlashRegionError();
     }
 
-    uint32_t value = _samba.readWord(NVM_LOCK_REG);
+    if (_isD51 == true) {
+      value = _samba.readWord(NVM_D51_UNLOCK_REG);
+    } else {
+      value = _samba.readWord(NVM_LOCK_REG);
+    }
 
     return ((value & (1 << region)) == 0); // 0 -> locked, 1 -> unlocked,
 }
@@ -190,18 +233,26 @@ NvmFlash::setLockRegion(uint32_t region, bool enable)
             // ADDR register, and then execute "lock region" cmd
             // on the NVM controller.
             uint32_t addr_to_lock = getAddressByRegion(region);
-            // addr_to_lock = addr_to_lock & 0x1fffff;
-            _samba.writeWord(NVM_ADDR_REG, addr_to_lock);
-
-            executeNvmCommand(CMD_LOCK_REGION);
+            //addr_to_lock = addr_to_lock & 0x1fffff;
+            if (_isD51 == true) {
+              _samba.writeWord(NVM_D51_ADDR_REG, addr_to_lock);
+              executeNvmCommand(CMD_D51_LOCK_REGION);
+            } else {
+              _samba.writeWord(NVM_ADDR_REG, addr_to_lock);
+              executeNvmCommand(CMD_LOCK_REGION);
+            }
         }
         else
         {
             uint32_t addr_to_unlock = getAddressByRegion(region);
-            addr_to_unlock = addr_to_unlock & 0x1fffff;
-            _samba.writeWord(NVM_ADDR_REG, addr_to_unlock);
-
-            executeNvmCommand(CMD_UNLOCK_REGION);
+            //addr_to_unlock = addr_to_unlock & 0x1fffff;
+            if (_isD51 == true) {
+              _samba.writeWord(NVM_D51_ADDR_REG, addr_to_unlock);
+              executeNvmCommand(CMD_D51_UNLOCK_REGION);
+            } else {
+              _samba.writeWord(NVM_ADDR_REG, addr_to_unlock);
+              executeNvmCommand(CMD_UNLOCK_REGION);
+            }
         }
     }
 }
@@ -211,10 +262,13 @@ NvmFlash::setLockRegion(uint32_t region, bool enable)
 bool
 NvmFlash::getSecurity()
 {
-    uint16_t status_reg_value = _samba.readWord(NVM_STATUS_REG) & 0xffff;
-
-    // If the 8th bit is 1 then security bit is set, else unset.
-    return (((status_reg_value >> 8) & 0x1) == 1);
+    if (_isD51 == true) {
+      uint16_t status_reg_value = _samba.readWord(NVM_D51_SECURITY_BIT_REG) & 0xffff;
+      return (((status_reg_value >> NVM_D51_SECURITY_BIT_POS) & 0x1) == 1);
+    } else {
+      uint16_t status_reg_value = _samba.readWord(NVM_SECURITY_BIT_REG) & 0xffff;
+      return (((status_reg_value >> NVM_SECURITY_BIT_POS) & 0x1) == 1);
+    }
 }
 
 // Set's the security bit.
@@ -223,11 +277,31 @@ NvmFlash::setSecurity()
 {
     if (!getSecurity())
     {
-        executeNvmCommand(CMD_SET_SECURITY_BIT);
+        if (_isD51 == true) {
+          // Clear error bits
+          uint16_t status_reg = _samba.readWord(NVM_D51_ERROR_REG) & 0xffff;
+          _samba.writeWord(NVM_D51_ERROR_REG, status_reg & NVM_D51_ERROR_MASK);
 
-        if (!getSecurity())
-        {
+          // Set security bit, wait for completion
+          executeNvmCommand(CMD_D51_SET_SECURITY_BIT);
+          while ((_samba.readByte(NVM_D51_ERROR_REG) & NVM_D51_ERROR_DONE_MASK) == 0);
+
+          // Check for error
+          status_reg = _samba.readWord(NVM_D51_ERROR_REG) & 0xffff;
+          if (status_reg & NVM_D51_ERROR_PROGE_MASK)
+          {
             throw NvmFlashCmdError("Error when setting security bit");
+          } else {
+            // Reset NVM controller so that the security status bit is updated
+            // executeNvmCommand(CMD_D51_RESET_CONTROLLER);
+          }
+        } else {
+          executeNvmCommand(CMD_SET_SECURITY_BIT);
+
+          if (!getSecurity())
+          {
+            throw NvmFlashCmdError("Error when setting security bit");
+          }
         }
     }
 }
@@ -236,25 +310,25 @@ NvmFlash::setSecurity()
 void
 NvmFlash::setBod(bool enable)
 {
-    uint32_t bod33_ctrl_reg = _samba.readWord(SYSCTRL_BOD33_REG);
+    uint32_t bod33_ctrl_reg = _samba.readWord(_bodreg);
 
     if(enable)
     {
-        bod33_ctrl_reg |= SYSCTRL_STATUS_REG_ENABLE_BIT; // Enable the bod control
-        _samba.writeWord(SYSCTRL_BOD33_REG, bod33_ctrl_reg);
+        bod33_ctrl_reg |= _bodenablebit; // Enable the bod control
+        _samba.writeWord(_bodreg, bod33_ctrl_reg);
     }
     else
     {
-        bod33_ctrl_reg &= SYSCTRL_STATUS_REG_BOD33_MASK;
-        _samba.writeWord(SYSCTRL_BOD33_REG, bod33_ctrl_reg);
+        bod33_ctrl_reg &= ~(_bodenablebit);
+        _samba.writeWord(_bodreg, bod33_ctrl_reg);
     }
 }
 
 bool
 NvmFlash::getBod()
 {
-    uint32_t value = _samba.readWord(SYSCTRL_BOD33_REG);
-    bool bod_set = (((value & SYSCTRL_STATUS_REG_ENABLE_BIT) >> 1) == 0x1); // If Bit 1 of the BOD33 register is 1, then it's enabled
+    uint32_t value = _samba.readWord(_bodreg);
+    bool bod_set = (value & _bodenablebit) ? true : false;
 
     return bod_set;
 }
@@ -262,8 +336,8 @@ NvmFlash::getBod()
 bool
 NvmFlash::getBor()
 {
-    uint32_t bod33_ctrl_reg = _samba.readWord(SYSCTRL_BOD33_REG);
-    bool reset_enabled = ((bod33_ctrl_reg >> 3) & 0x1) == 0x1;
+    uint32_t bod33_ctrl_reg = _samba.readWord(_bodreg);
+    bool reset_enabled = (bod33_ctrl_reg & _bodresetbit) ? true : false;
 
     return reset_enabled;
 }
@@ -271,17 +345,17 @@ NvmFlash::getBor()
 void
 NvmFlash::setBor(bool enable)
 {
-    uint32_t bod33_ctrl_reg = _samba.readWord(SYSCTRL_BOD33_REG);
+    uint32_t bod33_ctrl_reg = _samba.readWord(_bodreg);
 
     if (enable)
     {
-        bod33_ctrl_reg |= SYSCTRL_STATUS_REG_BOD33_RESET_ENABLE_BIT; // To enable brown out reset set bit 3.
-        _samba.writeWord(SYSCTRL_BOD33_REG, bod33_ctrl_reg);
+        bod33_ctrl_reg |= _bodresetbit;
+        _samba.writeWord(_bodreg, bod33_ctrl_reg);
     }
     else
     {
-        bod33_ctrl_reg &= SYSCTRL_STATUS_REG_BOD33_RESET_MASK;
-        _samba.writeWord(SYSCTRL_BOD33_REG, bod33_ctrl_reg);
+        bod33_ctrl_reg &= ~(_bodresetbit);
+        _samba.writeWord(_bodreg, bod33_ctrl_reg);
     }
 }
 
@@ -308,16 +382,30 @@ NvmFlash::writePage(uint32_t page)
     }
 
     // Clear page buffer
-    executeNvmCommand(CMD_CLEAR_PAGE_BUFFER);
+    if (_isD51 == true) {
+      executeNvmCommand(CMD_D51_CLEAR_PAGE_BUFFER);
+    } else {
+      executeNvmCommand(CMD_CLEAR_PAGE_BUFFER);
+    }
 
     // Clear error flags in target
-    uint16_t status_reg = _samba.readWord(NVM_STATUS_REG) & 0xffff;
-    _samba.writeWord(NVM_STATUS_REG, status_reg | NVMCTRL_STATUS_MASK);
+    if (_isD51 == true) {
+      uint16_t status_reg = _samba.readWord(NVM_D51_ERROR_REG) & 0xffff;
+      _samba.writeWord(NVM_D51_ERROR_REG, status_reg & NVM_D51_ERROR_MASK);
+    } else {
+      uint16_t status_reg = _samba.readWord(NVM_ERROR_REG) & 0xffff;
+      _samba.writeWord(NVM_ERROR_REG, status_reg | NVM_ERROR_MASK);
+    }
 
     // Configure manual page write. This is critical for the write to work
     // irrespective of full page or partial page.
-    uint32_t ctrlb_reg = _samba.readWord(NVM_CTRLB_REG);
-    _samba.writeWord(NVM_CTRLB_REG, ctrlb_reg | (0x1 << 7));
+    if (_isD51 == true) {
+      uint32_t ctrlb_reg = _samba.readWord(NVM_D51_CONTROL_REG);
+      _samba.writeWord(NVM_D51_CONTROL_REG, ctrlb_reg & ~NVM_D51_CONTROL_MANUAL_WRITE_MASK); // clear WMODE bits
+    } else {
+      uint32_t ctrlb_reg = _samba.readWord(NVM_CONTROL_REG);
+      _samba.writeWord(NVM_CONTROL_REG, ctrlb_reg | NVM_CONTROL_MANUAL_WRITE_BIT);
+    }
 
     // Compute the start address.
     uint32_t addr = _addr + (page * _size );
@@ -333,9 +421,15 @@ NvmFlash::writePage(uint32_t page)
 
     while (!nvmIsReady());
 
-    _samba.writeWord(NVM_ADDR_REG, addr_cached >> 1);
-    // Reset the buffer, so that subsequent reads are clear
-    executeNvmCommand(CMD_WRITE_PAGE);
+    if (_isD51 == true) {
+      // Reset the buffer, so that subsequent reads are clear
+      _samba.writeWord(NVM_D51_ADDR_REG, addr_cached);
+      executeNvmCommand(CMD_D51_WRITE_PAGE);
+    } else {
+      // Reset the buffer, so that subsequent reads are clear
+      _samba.writeWord(NVM_ADDR_REG, addr_cached >> 1); // Convert byte address to word addres
+      executeNvmCommand(CMD_WRITE_PAGE);
+    }
 }
 
 void
@@ -355,7 +449,7 @@ NvmFlash::readPage(uint32_t page, uint8_t* buf)
 
 // Returns the start address of a specified region number
 // based on the flash specifications. The returned address is
-// word address (not byte address).
+// word address (or byte address for D51).
 uint32_t
 NvmFlash::getAddressByRegion(uint32_t region_num)
 {
@@ -366,7 +460,9 @@ NvmFlash::getAddressByRegion(uint32_t region_num)
 
     uint32_t size_of_region = (pageSize() * _pages) / _lockRegions; // Flash Size / no of lock regions
     uint32_t addr = address() + (region_num * size_of_region);
-    addr = addr / 2; // Convert byte address to word address
+    if (_isD51 == false) {
+      addr = addr / 2; // Convert byte address to word address if not D51
+    }
 
     return addr;
 }
@@ -380,7 +476,11 @@ NvmFlash::executeNvmCommand(uint32_t cmd)
     }
 
     // Send the comamnd to nvm controller.
-    _samba.writeWord(NVM_CTRLA_REG, cmd);
+    if (_isD51 == true) {
+      _samba.writeWord(NVM_D51_COMMAND_REG, cmd);
+    } else {
+      _samba.writeWord(NVM_COMMAND_REG, cmd);
+    }
 
     // Wait till the operation completes.
     while (!nvmIsReady())

@@ -1,3 +1,26 @@
+BOSSA 1.7.0-mattairtech-2
+-------------------------------
+
+This version improves support for the SAML21 and SAMC21.
+It also adds support for the SAMD51 (M4F):
+
+ * ATSAMD51P20A
+ * ATSAMD51P19A
+ * ATSAMD51N20A
+ * ATSAMD51N19A
+ * ATSAMD51J20A
+ * ATSAMD51J19A
+ * ATSAMD51J18A
+ * ATSAMD51G19A
+ * ATSAMD51G18A
+
+
+BOSSA 1.7.0-mattairtech-1
+-------------------------------
+
+This version merges in upstream changes from BOSSA 1.7.0-arduino.
+
+
 BOSSA 1.6.1-arduino-mattairtech-2
 -------------------------------
 

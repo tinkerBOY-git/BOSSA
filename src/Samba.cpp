@@ -177,7 +177,7 @@ Samba::init()
             printf("Unsupported ARM920T architecture\n");
     }
     // Check for supported M0+ processor
-    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000 || (cid & 0xFFFF0000) == 0x11010000 || (cid & 0xFFFF0000) == 0x10810000)
+    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000 || (cid & 0xFFFF0000) == 0x11010000 || (cid & 0xFFFF0000) == 0x10810000 || (cid & 0xFFFF0000) == 0x60060000)
     {
 	    // Check for SAM M0+ architecture
 	    switch (cid)
@@ -193,7 +193,17 @@ Samba::init()
 		    case ATSAMD21E18A_CHIPID:
 		    case ATSAMD21E17A_CHIPID:
 		    case ATSAMD21E16A_CHIPID:
-		    case ATSAMD21E15A_CHIPID:
+                    case ATSAMD21E15A_CHIPID:
+
+                    case ATSAMD51G18A_CHIPID:
+                    case ATSAMD51G19A_CHIPID:
+                    case ATSAMD51J18A_CHIPID:
+                    case ATSAMD51J19A_CHIPID:
+                    case ATSAMD51J20A_CHIPID:
+                    case ATSAMD51N19A_CHIPID:
+                    case ATSAMD51N20A_CHIPID:
+                    case ATSAMD51P19A_CHIPID:
+                    case ATSAMD51P20A_CHIPID:
 			    
 		    case ATSAML21J18B_CHIPID:
 		    case ATSAML21J17B_CHIPID:
@@ -688,8 +698,8 @@ Samba::chipId()
     // The M0+, M3 and M4 have the CPUID register at a common addresss 0xe000ed00
     uint32_t cpuid_reg = readWord(0xe000ed00);
     uint16_t part_no = cpuid_reg & 0x0000fff0;
-    // Check if it is Cortex M0+
-    if (part_no == 0xC600)
+    // Check if it is Cortex M0+ (or SAMD51 M4F)
+    if (part_no == 0xC600 || part_no == 0xC240)
     {
         return readWord(0x41002018) & ATSAMD_CHIPID_MASK ; // DSU_DID register masked to remove DIE and REV
     }
@@ -722,6 +732,16 @@ Samba::reset(void)
     case ATSAMD21E17A_CHIPID:
     case ATSAMD21E16A_CHIPID:
     case ATSAMD21E15A_CHIPID:
+
+    case ATSAMD51G18A_CHIPID:
+    case ATSAMD51G19A_CHIPID:
+    case ATSAMD51J18A_CHIPID:
+    case ATSAMD51J19A_CHIPID:
+    case ATSAMD51J20A_CHIPID:
+    case ATSAMD51N19A_CHIPID:
+    case ATSAMD51N20A_CHIPID:
+    case ATSAMD51P19A_CHIPID:
+    case ATSAMD51P20A_CHIPID:
 
     case ATSAML21J18B_CHIPID:
     case ATSAML21J17B_CHIPID:
