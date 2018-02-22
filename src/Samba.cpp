@@ -50,7 +50,7 @@ using namespace std;
 
 #define TIMEOUT_QUICK   100
 #define TIMEOUT_NORMAL  1000
-#define TIMEOUT_LONG    5000
+#define TIMEOUT_LONG    10000
 
 #define min(a, b)   ((a) < (b) ? (a) : (b))
 
@@ -194,6 +194,13 @@ Samba::init()
 		    case ATSAMD21E17A_CHIPID:
 		    case ATSAMD21E16A_CHIPID:
                     case ATSAMD21E15A_CHIPID:
+
+                    case ATSAMD21J16B_CHIPID:
+                    case ATSAMD21J15B_CHIPID:
+                    case ATSAMD21G16B_CHIPID:
+                    case ATSAMD21G15B_CHIPID:
+                    case ATSAMD21E16B_CHIPID:
+                    case ATSAMD21E15B_CHIPID:
 
                     case ATSAMD51G18A_CHIPID:
                     case ATSAMD51G19A_CHIPID:
@@ -732,6 +739,13 @@ Samba::reset(void)
     case ATSAMD21E17A_CHIPID:
     case ATSAMD21E16A_CHIPID:
     case ATSAMD21E15A_CHIPID:
+
+    case ATSAMD21J16B_CHIPID:
+    case ATSAMD21J15B_CHIPID:
+    case ATSAMD21G16B_CHIPID:
+    case ATSAMD21G15B_CHIPID:
+    case ATSAMD21E16B_CHIPID:
+    case ATSAMD21E15B_CHIPID:
 
     case ATSAMD51G18A_CHIPID:
     case ATSAMD51G19A_CHIPID:

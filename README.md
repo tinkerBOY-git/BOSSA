@@ -1,3 +1,17 @@
+BOSSA 1.7.0-mattairtech-3
+-------------------------------
+
+Updated timeout for D51 1MB FLASH (5 second erase).
+Adds support for:
+
+ * ATSAMD21J16B
+ * ATSAMD21J15B
+ * ATSAMD21G16B
+ * ATSAMD21G15B
+ * ATSAMD21E16B (thanks [aksonlyaks](https://github.com/aksonlyaks))
+ * ATSAMD21E15B
+
+
 BOSSA 1.7.0-mattairtech-2
 -------------------------------
 
