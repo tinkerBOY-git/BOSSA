@@ -386,6 +386,13 @@ FlashFactory::create(Samba& samba, uint32_t chipId)
                               ATSAMR21E18A_NVMCTRL_BASE, ATSAMD_BOD33_REG, ATSAMD_BOD33_REG_RESET_BIT, BOD33_REG_ENABLE_BIT, ATSAMD_FLASH_ROW_PAGES, /*isD51*/false, /*canBrownout*/true ) ;
 	break ;
 
+    case ATSAMR34J18_CHIPID:
+        flash = new NvmFlash( samba, ATSAMR34J18_NAME, ATSAMR34J18_FLASH_BASE, ATSAMR34J18_FLASH_PAGES, ATSAMR34J18_FLASH_PAGE_SIZE,
+                              ATSAMR34J18_FLASH_PLANES, ATSAMR34J18_FLASH_LOCK_REGIONS, ATSAMR34J18_BUFFER_ADDR, ATSAML21J18B_STACK_ADDR,
+                              ATSAML21J18B_NVMCTRL_BASE, ATSAML_BOD33_REG, ATSAML_BOD33_REG_RESET_BIT, BOD33_REG_ENABLE_BIT, ATSAMD_FLASH_ROW_PAGES, /*isD51*/false, /*canBrownout*/true ) ;
+        break ;
+
+
     //
     // SAM7SE
     //
