@@ -177,7 +177,7 @@ Samba::init()
             printf("Unsupported ARM920T architecture\n");
     }
     // Check for supported M0+ processor
-    else if ((cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000 || (cid & 0xFFFF0000) == 0x11010000 || (cid & 0xFFFF0000) == 0x10810000 || (cid & 0xFFFF0000) == 0x60060000)
+    else if ((cid & 0xFFFF0000) == 0x10010094 || (cid & 0xFFFF0000) == 0x10010000 || (cid & 0xFFFF0000) == 0x10030000 || (cid & 0xFFFF0000) == 0x11010000 || (cid & 0xFFFF0000) == 0x10810000 || (cid & 0xFFFF0000) == 0x60060000)
     {
 	    // Check for SAM M0+ architecture
 	    switch (cid)
