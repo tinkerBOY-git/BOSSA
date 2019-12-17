@@ -182,6 +182,8 @@ Samba::init()
 	    // Check for SAM M0+ architecture
 	    switch (cid)
 	    {
+		    case ATSAMD21E17D_CHIPID:
+			    
 		    case ATSAMD21J18A_CHIPID:
 		    case ATSAMD21J17A_CHIPID:
 		    case ATSAMD21J16A_CHIPID:
@@ -728,6 +730,8 @@ Samba::reset(void)
 
     switch (chipId)
     {
+    case ATSAMD21E17D_CHIPID:
+		    
     case ATSAMD21J18A_CHIPID:
     case ATSAMD21J17A_CHIPID:
     case ATSAMD21J16A_CHIPID:
