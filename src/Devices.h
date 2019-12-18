@@ -55,6 +55,18 @@
 #define BOD33_REG_ENABLE_BIT                 (0x2ul)
 
 /* SAMD21 - A Variant */
+
+#define ATSAMD21E17D_NAME                    "ATSAMD21E17D"
+#define ATSAMD21E17D_CHIPID                  (0x1001000bul)  // DIE & REV bitfields masked in Samba::chipId()
+#define ATSAMD21E17D_FLASH_BASE              (0x00000000ul + ATSAMD_BOOTLOADER_SIZE)
+#define ATSAMD21E17D_FLASH_PAGE_SIZE         (64ul)
+#define ATSAMD21E17D_FLASH_PAGES             (2048ul)
+#define ATSAMD21E17D_FLASH_PLANES            (1ul)
+#define ATSAMD21E17D_FLASH_LOCK_REGIONS      (16ul)
+#define ATSAMD21E17D_BUFFER_ADDR             (0x20002000ul)
+#define ATSAMD21E17D_STACK_ADDR              (0x20004000ul)
+#define ATSAMD21E17D_NVMCTRL_BASE            (0x41004000ul)
+
 #define ATSAMD21J18A_NAME                    "ATSAMD21J18A"
 #define ATSAMD21J18A_CHIPID                  (0x10010000ul)  // DIE & REV bitfields masked in Samba::chipId()
 #define ATSAMD21J18A_FLASH_BASE              (0x00000000ul + ATSAMD_BOOTLOADER_SIZE)
